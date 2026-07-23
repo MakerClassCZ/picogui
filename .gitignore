@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+build-*/
+mpy/
+dist/
+libraries/
+# tests/ = our internal host + on-device test suite; not part of the public library bundle (yet).
+tests/
+# scratchpad/ = work-in-progress README + examples staged for curation before they're published.
+scratchpad/
+.DS_Store
+node_modules/
+.claude/

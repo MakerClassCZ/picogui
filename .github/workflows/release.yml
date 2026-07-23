@@ -1,0 +1,68 @@
+name: Build release bundles
+
+# On a version tag, build the circup-installable bundles (raw .py + .mpy per CircuitPython version)
+# and attach them to the GitHub Release. circup reads the JSON + the *-py / *-mpy zips from the
+# release assets, so `circup bundle-add MakerClassCZ/picogui` then sees every module.
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+
+permissions:
+  contents: write          # upload assets onto the release
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # build.version_string() needs the tags
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install build tools
+        run: pip install circuitpython-build-tools
+
+      - name: Stage one folder per module
+        # build-tools wants each library in its own folder; our repo keeps them flat at the root, so
+        # mirror them into libraries/<name>/<name>.py just for the build (never committed). The glob
+        # catches both the core module (picogui.py) and the picogui_*.py backends/widgets.
+        run: |
+          mkdir -p libraries
+          for f in picogui*.py; do
+            n="${f%.py}"
+            mkdir -p "libraries/$n"
+            cp "$f" "libraries/$n/$n.py"
+          done
+          echo "picogui backend-neutral config-UI toolkit" > README.txt
+
+      - name: Build bundles (raw .py + .mpy per CircuitPython version)
+        # mpy-cross for each target CircuitPython version is fetched automatically from S3.
+        # Skip build-tools' own JSON: it keys packages by repo, so a multi-module repo collapses to
+        # a single entry. We regenerate a complete one below. Skip the (empty) examples bundle too.
+        run: |
+          circuitpython-build-bundles \
+            --filename_prefix picogui \
+            --library_location libraries --library_depth 1 \
+            --package_folder_prefix picogui_ \
+            --output_directory dist \
+            --ignore json --ignore example
+
+      - name: Generate complete bundle JSON (all modules + intra-bundle deps)
+        run: |
+          VERSION=$(git describe --tags)
+          python .github/scripts/gen_bundle_json.py libraries \
+            "dist/picogui-${VERSION}.json" "${VERSION}" \
+            "https://github.com/${GITHUB_REPOSITORY}"
+
+      - name: Attach bundles to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/picogui-*.zip
+            dist/picogui-*.json
