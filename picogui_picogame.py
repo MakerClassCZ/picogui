@@ -45,7 +45,8 @@ class App(ui._AppFacade):
             self.btn = picogame_input.Buttons(matrix=matrix)
         else:
             self.btn = picogame_input.Buttons()
-        self.session = ui.Session(theme, board.DISPLAY.width, board.DISPLAY.height,
+        _w, _h = picogame_game.screen()
+        self.session = ui.Session(theme, _w, _h,
                                   exit_on_root_back=exit_on_root_back)
         self.strip = pg.StripDraw(self._draw, 0, 0, self.session.W, self.session.H, always_dirty=False)
         self.scene.add(self.strip)

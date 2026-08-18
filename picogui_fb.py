@@ -24,7 +24,7 @@ class ColorSurface(_BitmapSurface):
 
 class App(_DisplayioApp):
     """picogui on a colour displayio display (a picodvi FramebufferDisplay, or any colour display handed
-    over). Pass the display (e.g. board.DISPLAY / supervisor.runtime.display, or one you built). picogui
+    over). Pass the display (e.g. picogame_game.display() / supervisor.runtime.display, or one you built). picogui
     renders into a 16bpp Bitmap and displayio pushes it; takeover/handback coexist with a host UI. The
     displayio-push lifecycle is shared in picogui_dispbase; this class only builds the colour stack."""
     def __init__(self, display, theme=None, exit_on_root_back=True):

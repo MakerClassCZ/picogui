@@ -201,8 +201,7 @@ class App(ui._AppFacade):
         self._rowstart = rowstart
         W = H = 0
         if display is None and sink is None:
-            import board
-            display = board.DISPLAY
+            display = picogame_game.display()
         if display is not None:
             self._display = display
             W = display.width
